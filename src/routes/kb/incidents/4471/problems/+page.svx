@@ -21,8 +21,9 @@ by tenant, by the way each report came in, and by what the reporter actually wro
 separate problems. Each now has its own ticket.
 
 <Callout kind="warn">
-Fixing the parser does not close this. The form hint and the one-day moves have causes of their
-own and stay broken after the parser fix ships.
+#4471 closed on 5 October with the parser fix (`fix(dates): parse dd/mm for eu locales`). That
+fix does not reach the one-day moves: they have a cause of their own and stay open as their own
+ticket.
 </Callout>
 
 ## The problems
@@ -41,7 +42,8 @@ Three tenants run `booking-v3`. Its date field prints `MM/DD/YYYY` under it. The
 what the hint says, month first, and the form then reads the value the tenant's way, day first.
 Only form reports from those tenants land here. The parser fix does not touch this: the swap
 happens before the parser sees the date. The old table already marked these "not this ticket", and
-they had no ticket of their own until now.
+they had no ticket of their own until now. The desk will not fix it: the booking-v3 form is
+retired.
 
 ### `one-day-move`: dates move by one day, not by a month
 
@@ -64,8 +66,10 @@ data can count.
 
 ## What changes on the desk
 
-- #4471 stays the `parser` ticket. Its status `known` with one fix queued is not true of the
-  others; they are open.
+- `parser`: fixed (`fix(dates): parse dd/mm for eu locales`); #4471 closed on 5 October, and its
+  ticket is closed.
+- `hint`: won't fix, because the booking-v3 form is retired; its ticket is closed.
+- `one-day-move`: still open. Closing #4471 did not close it; it needs its own fix.
 - Merging by subject ([decision 0001](/kb/decisions/0001-dedupe-by-subject)) did not make this
   ticket: its reports carry many different subjects. Splitting it needed the tenant, the form, the
   channel and the words. A new decision record should replace 0001 rather than edit it.
