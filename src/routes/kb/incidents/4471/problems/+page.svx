@@ -1,0 +1,73 @@
+---
+layout: runbook
+title: '#4471 · what the reports show'
+owner: support desk
+status: open
+reviewed: 2026-11-02
+signature: 'KamilK (texonica)'
+---
+
+<script>
+  import ProblemTable from '#lib/kb/ProblemTable.svelte';
+  import Callout from '#lib/kb/Callout.svelte';
+  import RenderStamp from '#lib/kb/RenderStamp.svelte';
+
+  const repo = 'https://github.com/texonica/mega-what-it-shows/issues';
+  const tickets = { parser: `${repo}/1`, hint: `${repo}/2`, 'one-day-move': `${repo}/3` };
+</script>
+
+[#4471](/kb/incidents/4471) says one issue with one fix queued. Its reports say otherwise. Read
+by tenant, by the way each report came in, and by what the reporter actually wrote, they hold
+separate problems. Each now has its own ticket.
+
+<Callout kind="warn">
+Fixing the parser does not close this. The form hint and the one-day moves have causes of their
+own and stay broken after the parser fix ships.
+</Callout>
+
+## The problems
+
+<ProblemTable ticket={4471} {tickets} />
+
+### `parser`: the shared parser reads every date month first
+
+Every tenant on file writes the day first. The parser reads the month first, so any date whose day
+is twelve or less comes out with day and month swapped: booked for 2 July, invited for 7 February.
+Only those dates have a swapped twin, and the reports only ever name days of twelve or less. This is the bug #4471 describes. It covers app, email and the booking-v2 form.
+
+### `hint`: the booking-v3 form prints the wrong hint
+
+Three tenants run `booking-v3`. Its date field prints `MM/DD/YYYY` under it. Their customers type
+what the hint says, month first, and the form then reads the value the tenant's way, day first.
+Only form reports from those tenants land here. The parser fix does not touch this: the swap
+happens before the parser sees the date. The old table already marked these "not this ticket", and
+they had no ticket of their own until now.
+
+### `one-day-move`: dates move by one day, not by a month
+
+These reports describe a day lost or gained, not a swap: Tuesday shown as Monday, a meeting held on
+two days for clients in Lisbon and Toronto, an invite sent before the booking existed, every June
+booking one day off. A day/month swap cannot produce any of them. That pattern points at time
+zones: a date-only value turned into a moment and shown in another offset. The desk had noted
+these reports (`desk-notes.json`) and the old table counted them under `parser` with a footnote.
+
+## How the counts are made
+
+- One report, one count: the export repeats some rows; `uniqueById` keeps each id once.
+- `parser` and `hint` come from `causes.ts`, by tenant locale, booking form and channel, as before.
+- `one-day-move` is the desk's own list in `desk-notes.json`, taken out of `parser`.
+- Intake's tag (`meta.intakeTag`) is not used: it is guessed from the reporter's browser and
+  disagrees with the tenant in both groups.
+
+Code: `src/lib/kb/problems.ts` and `ProblemTable.svelte`. Nothing on this page is typed that the
+data can count.
+
+## What changes on the desk
+
+- #4471 stays the `parser` ticket. Its status `known` with one fix queued is not true of the
+  others; they are open.
+- Merging by subject ([decision 0001](/kb/decisions/0001-dedupe-by-subject)) did not make this
+  ticket: its reports carry many different subjects. Splitting it needed the tenant, the form, the
+  channel and the words. A new decision record should replace 0001 rather than edit it.
+
+<RenderStamp {signature} />
